@@ -13,8 +13,8 @@ set(CMAKE_SYSROOT ${XTOOLS_ROOT}/x86_64-linux-gnu/sysroot)
 set(CMAKE_SYSROOT_LINK ${CMAKE_SYSROOT})
 set(CMAKE_LINKER ${LLVM_ROOT}/bin/ld.lld)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${XTOOLS_ROOT} -fuse-ld=${CMAKE_LINKER}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -stdlib=libc++ --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${XTOOLS_ROOT} -fuse-ld=${CMAKE_LINKER}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${XTOOLS_ROOT}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -stdlib=libc++ --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${XTOOLS_ROOT}")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${XTOOLS_ROOT}")
 
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fPIC -stdlib=libc++ --sysroot=${CMAKE_SYSROOT} -fuse-ld=${CMAKE_LINKER} -fuse-ld=lld --gcc-toolchain=${XTOOLS_ROOT}")
