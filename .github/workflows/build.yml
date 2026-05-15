@@ -59,7 +59,7 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y ninja-build python3-pyelftools elfutils patchelf nasm
-          sudo apt-get install -y autoconf automake autoconf-archive
+          sudo apt-get install -y autoconf automake autoconf-archive libtool libltdl-dev
 
       - name: Fetch toolchains
         if: runner.os == 'Linux' && !contains(matrix.arch, 'android')
@@ -182,5 +182,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG_NAME" --prerelease || true
-          gh release upload "$TAG_NAME" tarball/*
+          gh release view "$TAG_NAME" >/dev/null 2>&1 || gh release create "$TAG_NAME" --prerelease
+          gh release upload "$TAG_NAME" tarball/* --clobber
