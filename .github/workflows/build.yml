@@ -1,0 +1,186 @@
+name: build
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      use-cache:
+        type: boolean
+        default: true
+        description: Use binary cache
+
+permissions:
+  contents: write
+
+jobs:
+  build-mpadeps:
+    strategy:
+      matrix:
+        os: [ubuntu, windows, macos]
+        arch: [x64, arm64]
+        include:
+          - os: ubuntu
+            arch: arm64-android
+          - os: ubuntu
+            arch: x64-android
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash
+    runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 720
+    steps:
+      - name: Windows runner hack
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          dir d:\a
+          cd ..
+          mkdir C:\MpaDeps
+          rmdir MpaDeps
+          mklink /j MpaDeps C:\MpaDeps
+          dism /Online /Disable-Feature /FeatureName:Windows-Defender /Remove /NoRestart /Quiet
+          cd .
+
+      - name: Windows runner hack (2)
+        if: runner.os == 'Windows'
+        uses: al-cheb/configure-pagefile-action@v1.3
+        with:
+          minimum-size: 16GB
+          maximum-size: 16GB
+          disk-root: "D:"
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Install Packages on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build python3-pyelftools elfutils patchelf nasm
+          sudo apt-get install -y autoconf automake autoconf-archive
+
+      - name: Fetch toolchains
+        if: runner.os == 'Linux' && !contains(matrix.arch, 'android')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 linux-toolchain-download.py ${{ matrix.arch }}
+
+      - uses: nttld/setup-ndk@v1
+        if: contains(matrix.arch, 'android')
+        id: setup-ndk
+        with:
+          ndk-version: r27d
+          add-to-path: false
+
+      - name: Install Packages on MacOS
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install ccache ninja pkg-config nasm bison
+          brew install autoconf automake autoconf-archive
+
+          brew install bash gnu-sed gnu-tar
+          echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
+          echo "$(brew --prefix)/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
+
+          brew uninstall cmake
+
+      - name: Install cmake on MacOS
+        if: runner.os == 'macOS'
+        run: |
+          wget -q https://github.com/Kitware/CMake/releases/download/v3.31.8/cmake-3.31.8-macos-universal.tar.gz
+          tar zxvf cmake-3.31.8-macos-universal.tar.gz
+          mv cmake-3.31.8-macos-universal/CMake.app .
+          rmdir cmake-3.31.8-macos-universal
+          echo "PATH=`pwd`/CMake.app/Contents/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Check cmake on MacOS
+        if: runner.os == 'macOS'
+        run: |
+          cmake --version
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            vcpkg/downloads/
+          key: cache-downloads-${{ matrix.os }}-${{ matrix.arch }}-${{ hashfiles('vcpkg-overlay', 'vcpkg*.json') }}
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.os == 'windows'
+        id: msvc-env
+        with:
+          arch: amd64${{ matrix.arch != 'x64' && format('_{0}', matrix.arch) || '' }}
+
+      - name: Setup MSVC environment
+        if: matrix.os == 'windows'
+        run: |
+          echo "CC=cl" >> $GITHUB_ENV
+          echo "CXX=cl" >> $GITHUB_ENV
+
+      - name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
+        with:
+          windows_compile_environment: msvc
+
+      - name: Set target
+        run: |
+          lower() { printf '%s\n' "${1,,}"; }
+
+          if [[ "${{matrix.arch}}" == *"android"* ]]; then
+            echo "TARGET=${{ matrix.arch }}" >> $GITHUB_ENV
+          else
+            export RUNNER_OS=$(lower ${{runner.os}})
+            export OS=$(echo $RUNNER_OS | sed 's/macOS/osx/I')
+            echo "TARGET=${{ matrix.arch }}-${OS}" >> $GITHUB_ENV
+          fi
+
+      - name: Set OBJCOPY
+        if: runner.os == 'Linux' && !contains(matrix.arch, 'android')
+        run: |
+          echo "OBJCOPY=`pwd`/x-tools/llvm/bin/llvm-objcopy" >> $GITHUB_ENV
+
+      - name: Build MpaDeps
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          for attempt in 1 2 3
+          do
+            python3 build.py --tarball --target mpa-$TARGET -- $MPA_CMAKE_ARGS && break
+            shopt -s globstar nullglob
+            df -lh
+            rm -f vcpkg/buildtrees/**/*.{o,obj,a,lib}
+            df -lh
+            du -sh vcpkg/buildtrees/*
+            [[ $attempt != 3 ]]
+          done
+
+      - name: Collect Logs
+        if: always()
+        run: |
+          shopt -s globstar
+          tar caf logs.tar --ignore-failed-read vcpkg/buildtrees/**/*.log
+
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logs-${{ env.TARGET }}
+          path: logs.tar
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarball-${{ env.TARGET }}
+          path: tarball
+
+      - name: release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG_NAME" --prerelease || true
+          gh release upload "$TAG_NAME" tarball/*

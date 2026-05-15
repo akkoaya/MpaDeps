@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "mpa-meta",
+  "version": "0.1.0",
+  "description": "meta manifest that tracks dependencies for MpaFrameWork",
+  "homepage": "https://github.com/akkoaya/MpaDeps",
+  "license": null,
+  "dependencies": [
+    {
+      "name": "opencv",
+      "default-features": false,
+      "features": [
+        "jpeg",
+        "png",
+        "tiff",
+        "calib3d",
+        "world"
+      ]
+    },
+    "mpa-onnxruntime",
+    "mpa-fastdeploy",
+    "zlib",
+    "boost-asio",
+    "boost-core",
+    "boost-dll",
+    "boost-process",
+    "boost-system",
+    "boost-uuid"
+  ]
+}

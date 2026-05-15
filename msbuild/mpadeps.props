@@ -1,0 +1,24 @@
+<Project>
+  <PropertyGroup>
+    <MpaDepsTriplet Condition="'$(Platform)'=='x64'">mpa-x64-windows</MpaDepsTriplet>
+    <MpaDepsTriplet Condition="'$(Platform)'=='ARM64'">mpa-arm64-windows</MpaDepsTriplet>
+    <MpaDepsPrefix>$(MSBuildThisFileDirectory)..\vcpkg\installed\$(MpaDepsTriplet)</MpaDepsPrefix>
+    <MpaDepsIncludeDir>$(MpaDepsPrefix)\include</MpaDepsIncludeDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' != 'Debug'">
+    <MpaDepsLibDir>$(MpaDepsPrefix)\lib</MpaDepsLibDir>
+    <MpaDepsRuntime>$(MSBuildThisFileDirectory)..\runtime\$(MpaDepsTriplet)</MpaDepsRuntime>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <MpaDepsLibDir>$(MpaDepsPrefix)\debug\lib</MpaDepsLibDir>
+    <MpaDepsRuntime>$(MSBuildThisFileDirectory)..\runtime\$(MpaDepsTriplet)\msvc-debug</MpaDepsRuntime>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(MpaDepsIncludeDir);$(MpaDepsIncludeDir)\onnxruntime\core\session;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(MpaDepsLibDir)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

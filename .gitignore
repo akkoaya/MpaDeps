@@ -1,0 +1,10 @@
+/runtime/
+/debug/
+/logs/
+/tarball/
+/src/
+/x-tools/
+__pycache__/
+mpadeps/__pycache__/
+mpadeps/vendor/__pycache__/
+mpadeps/vendor/ordlookup/__pycache__/

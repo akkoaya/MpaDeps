@@ -1,0 +1,20 @@
+<Project>
+  <Target Name="MessageNotExists" BeforeTargets="Build" Condition="!Exists($(MpaDepsPrefix))">
+    <Error Text="Dependencies not found for $(MpaDepsTriplet). Bootstrap or build MpaDeps first." />
+  </Target>
+
+  <Target Name="CopyMpaDepsRuntimeFiles" AfterTargets="Build">
+    <ItemGroup>
+      <MpaDepsRuntimeFiles Include="$(MpaDepsRuntime)\**\*.*" Exclude="$(MpaDepsRuntime)\msvc-debug\**\*.*" />
+    </ItemGroup>
+    <Message Text="Copying MpaDeps runtime files" Importance="High" />
+    <Copy
+      Condition="'$(TargetDir)' != ''"
+      SourceFiles="@(MpaDepsRuntimeFiles)"
+      DestinationFiles="$(TargetDir)\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Copy
+      Condition="'$(TargetDir)' == '' and '$(OutputPath)' != ''"
+      SourceFiles="@(MpaDepsRuntimeFiles)"
+      DestinationFiles="$(OutputPath)\%(RecursiveDir)%(Filename)%(Extension)" />
+  </Target>
+</Project>
