@@ -14,6 +14,25 @@ triplet: str
 cross_compiling = False
 
 
+def _prepend_env_path(name: str, value: str) -> None:
+    current = os.environ.get(name, "")
+    parts = [entry for entry in current.split(os.pathsep) if entry]
+    if value in parts:
+        parts.remove(value)
+    os.environ[name] = os.pathsep.join([value, *parts]) if parts else value
+
+
+def _configure_linux_llvm_runtime_env() -> None:
+    if not host_triplet.endswith("-linux"):
+        return
+    llvm_lib_dir = os.path.join(basedir, "x-tools", "llvm", "lib")
+    if not os.path.isdir(llvm_lib_dir):
+        return
+    # MaaLinuxToolchain ships libc++.so in x-tools/llvm/lib, and Meson sanity
+    # checks execute test binaries during configure. Make that runtime visible.
+    _prepend_env_path("LD_LIBRARY_PATH", llvm_lib_dir)
+
+
 def _is_vcpkg_checkout(path: str) -> bool:
     return (
         os.path.exists(os.path.join(path, "bootstrap-vcpkg.bat"))
@@ -94,6 +113,7 @@ def bootstrap(target_triplet=None):
 
     os.environ["VCPKG_OVERLAY_TRIPLETS"] = os.path.join(basedir, "vcpkg-overlay", "triplets")
     os.environ["VCPKG_OVERLAY_PORTS"] = os.path.join(basedir, "vcpkg-overlay", "ports")
+    _configure_linux_llvm_runtime_env()
 
     _ensure_vcpkg_checkout()
 
