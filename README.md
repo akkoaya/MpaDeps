@@ -14,6 +14,7 @@ dependency repository and is scoped to the project's immediate needs:
 * FastDeploy PPOCR
 * ONNXRuntime
 * OpenCV
+* ZeroMQ / cppzmq for native Agent transport and reverse RPC
 
 The repository keeps `vcpkg` as a Git submodule, matching the upstream
 `MaaDeps` layout, while publishing project-owned `MpaDeps-*` release assets.
@@ -31,7 +32,7 @@ repo feature. It establishes:
 * CMake prefix injection
 * runtime install helper
 * Windows MSBuild integration skeleton
-* a manifest for the owned OCR + shared utility dependency subset
+* a manifest for the owned OCR + shared utility + Agent transport dependency subset
 * release packaging for `devel` and `runtime` archives
 
 ## Layout
@@ -101,4 +102,5 @@ MpaFrameWork prefers this local dependency root when present:
 
 * publish release artifacts from `https://github.com/akkoaya/MpaDeps`
 * keep FastDeploy pinned to the owned `akkoaya/FastDeploy` fork
+* keep ZeroMQ packaging aligned with the native Agent `cppzmq` smoke
 * generate runtime/devel artifacts for the supported Windows triplet
