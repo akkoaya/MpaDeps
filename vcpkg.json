@@ -1,15 +1,27 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "mpa-meta",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "meta manifest that tracks dependencies for MpaFrameWork",
   "homepage": "https://github.com/akkoaya/MpaDeps",
   "license": null,
   "dependencies": [
     {
+      "name": "wayland",
+      "platform": "linux",
+      "features": [
+        "force-build"
+      ]
+    },
+    {
+      "name": "libxkbcommon",
+      "platform": "linux"
+    },
+    {
       "name": "opencv",
       "default-features": false,
       "features": [
+        "eigen",
         "jpeg",
         "png",
         "tiff",
@@ -17,18 +29,48 @@
         "world"
       ]
     },
-    "mpa-onnxruntime",
+    {
+      "$FIXME": "default-features: false for opencv doesn't get propagated to opencv4",
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "eigen",
+        "jpeg",
+        "png",
+        "tiff",
+        "calib3d",
+        "world"
+      ]
+    },
+    {
+      "name": "mpa-onnxruntime",
+      "platform": "windows",
+      "features": [
+        "directml"
+      ]
+    },
+    {
+      "name": "mpa-onnxruntime",
+      "platform": "osx",
+      "features": [
+        "coreml"
+      ]
+    },
+    {
+      "name": "mpa-onnxruntime",
+      "platform": "linux"
+    },
     "mpa-fastdeploy",
-    "cppzmq",
     "zlib",
     "boost-asio",
     "boost-core",
     "boost-dll",
+    "boost-process",
+    "boost-uuid",
+    "cppzmq",
     {
-      "name": "boost-process",
-      "platform": "!android"
-    },
-    "boost-system",
-    "boost-uuid"
+      "name": "vgamepad-bin",
+      "platform": "windows & (x64 | x86)"
+    }
   ]
 }

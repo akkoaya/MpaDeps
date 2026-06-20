@@ -1,6 +1,5 @@
 import sys
 import os
-import shutil
 from .common import basedir, host_triplet
 import subprocess
 from .runner import task
@@ -12,6 +11,13 @@ root = os.path.join(basedir, "vcpkg")
 install_prefix: str
 triplet: str
 cross_compiling = False
+
+
+def _strip_mpa_triplet_prefix(value: str) -> str:
+    prefix = "mpa-"
+    if value.startswith(prefix):
+        return value[len(prefix) :]
+    return value
 
 
 def _prepend_env_path(name: str, value: str) -> None:
@@ -40,64 +46,10 @@ def _is_vcpkg_checkout(path: str) -> bool:
     )
 
 
-def _remove_checkout(path: str) -> None:
-    if os.path.isdir(path):
-        shutil.rmtree(path)
-    elif os.path.exists(path):
-        os.remove(path)
-
-
-def _checkout_candidates():
-    for env_name in ("MPADEPS_VCPKG_ROOT", "VCPKG_ROOT"):
-        candidate = os.environ.get(env_name, "").strip()
-        if not candidate:
-            continue
-        candidate = os.path.abspath(candidate)
-        if candidate == os.path.abspath(root):
-            continue
-        yield env_name, candidate
-
-
-def _copy_vcpkg_checkout(source_root: str) -> None:
-    print(f"copying vcpkg checkout from {source_root} -> {root}")
-    _remove_checkout(root)
-    shutil.copytree(
-        source_root,
-        root,
-        ignore=shutil.ignore_patterns(
-            "buildtrees",
-            "downloads",
-            "installed",
-            "packages",
-        ),
-    )
-
-
-def _clone_vcpkg_checkout() -> None:
-    if os.path.exists(root):
-        _remove_checkout(root)
-    subprocess.check_call(
-        [
-            "git",
-            "clone",
-            "--depth",
-            "1",
-            "https://github.com/microsoft/vcpkg.git",
-            root,
-        ],
-        cwd=basedir,
-    )
-
-
 def _ensure_vcpkg_checkout() -> None:
     if _is_vcpkg_checkout(root):
         return
-    for env_name, candidate in _checkout_candidates():
-        if _is_vcpkg_checkout(candidate):
-            print(f"using {env_name}={candidate} as the seed vcpkg checkout")
-            _copy_vcpkg_checkout(candidate)
-            return
-    _clone_vcpkg_checkout()
+    subprocess.check_call(["git", "submodule", "update", "--init", "--recommend-shallow", "vcpkg"], cwd=basedir)
 
 @task
 def bootstrap(target_triplet=None):
@@ -108,7 +60,7 @@ def bootstrap(target_triplet=None):
 
     global triplet, cross_compiling, install_prefix
     triplet = target_triplet
-    cross_compiling = host_triplet != target_triplet.removeprefix("mpa-")
+    cross_compiling = host_triplet != _strip_mpa_triplet_prefix(target_triplet)
     install_prefix = os.path.join(root, "installed", target_triplet)
 
     os.environ["VCPKG_OVERLAY_TRIPLETS"] = os.path.join(basedir, "vcpkg-overlay", "triplets")
