@@ -10,17 +10,40 @@ index b8e2ec6..1bbb452 100644
 +  description: 'Scanner path',
 +  type: 'string',
 +  value: '')
+diff --git a/meson.build b/meson.build
+index b3f8801..0e07dd2 100644
+--- a/meson.build
++++ b/meson.build
+@@ -95,7 +95,7 @@ if get_option('libraries')
+-	if not cc.has_function('clock_gettime', prefix: '#include <time.h>')
+-		rt_dep = cc.find_library('rt')
+-		if not cc.has_function('clock_gettime', prefix: '#include <time.h>', dependencies: rt_dep, args: cc_args)
+-			error('clock_gettime not found')
+-		endif
+-	endif
++	if not cc.has_function('clock_gettime', prefix: '#define _POSIX_C_SOURCE 200809L\n#include <time.h>')
++		rt_dep = cc.find_library('rt')
++		if not cc.has_function('clock_gettime', prefix: '#define _POSIX_C_SOURCE 200809L\n#include <time.h>', dependencies: rt_dep, args: cc_args)
++			error('clock_gettime not found')
++		endif
++	endif
+ endif
 diff --git a/src/meson.build b/src/meson.build
 index a8a1d2b..1e8b770 100644
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -78,8 +78,7 @@ if get_option('scanner')
+@@ -78,8 +78,12 @@ if get_option('scanner')
  endif
  
  if meson.is_cross_build() or not get_option('scanner')
 -	scanner_dep = dependency('wayland-scanner', native: true, version: meson.project_version())
 -	wayland_scanner_for_build = find_program(scanner_dep.get_variable(pkgconfig: 'wayland_scanner'))
-+	wayland_scanner_for_build = find_program('wayland-scanner', get_option('scanner_path'))
++	if get_option('scanner_path') != ''
++		wayland_scanner_for_build = find_program(get_option('scanner_path'))
++	else
++		scanner_dep = dependency('wayland-scanner', native: true, version: meson.project_version())
++		wayland_scanner_for_build = find_program(scanner_dep.get_variable(pkgconfig: 'wayland_scanner'))
++	endif
  else
  	wayland_scanner_for_build = wayland_scanner
  endif
