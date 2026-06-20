@@ -17,7 +17,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC --sysroot=${CMAKE_SYSROOT} --gcc-toolc
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -stdlib=libc++ --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${XTOOLS_ROOT}")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${XTOOLS_ROOT}")
 
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fPIC -stdlib=libc++ --sysroot=${CMAKE_SYSROOT} -fuse-ld=${CMAKE_LINKER} -fuse-ld=lld --gcc-toolchain=${XTOOLS_ROOT}")
-set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fPIC -stdlib=libc++ --sysroot=${CMAKE_SYSROOT} -fuse-ld=${CMAKE_LINKER} -fuse-ld=lld --gcc-toolchain=${XTOOLS_ROOT}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fPIC -stdlib=libc++ --sysroot=${CMAKE_SYSROOT} -fuse-ld=${CMAKE_LINKER} -fuse-ld=lld --gcc-toolchain=${XTOOLS_ROOT}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fPIC --sysroot=${CMAKE_SYSROOT} -fuse-ld=${CMAKE_LINKER} -fuse-ld=lld --gcc-toolchain=${XTOOLS_ROOT}")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fPIC --sysroot=${CMAKE_SYSROOT} -fuse-ld=${CMAKE_LINKER} -fuse-ld=lld --gcc-toolchain=${XTOOLS_ROOT}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fPIC --sysroot=${CMAKE_SYSROOT} -fuse-ld=${CMAKE_LINKER} -fuse-ld=lld --gcc-toolchain=${XTOOLS_ROOT}")
 set(CMAKE_LINKER_TYPE LLD)
